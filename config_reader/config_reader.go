@@ -12,13 +12,9 @@ import (
 // returns the config file and topic on success, or exits on error
 func ParseArgs() (*string, *string) {
 
-	configFile := flag.String("f", "", "Path to configuration file")
-	topic := flag.String("t", "", "Topic name")
+	configFile := flag.String("f", "./basic_config.cfg", "Path to configuration file")
+	topic := flag.String("t", "source", "Topic name")
 	flag.Parse()
-	if *configFile == "" || *topic == "" {
-		flag.Usage()
-		os.Exit(2) // the same exit code flag.Parse uses
-	}
 
 	return configFile, topic
 
@@ -56,5 +52,4 @@ func ReadConfig(configFile string) map[string]string {
 	}
 
 	return m
-
 }

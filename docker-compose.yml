@@ -4,8 +4,6 @@ services:
   zookeeper:
     image: wurstmeister/zookeeper
     container_name: zookeeper
-    networks:
-      - internal-network
     ports:
       - 2181:2181
 
@@ -28,8 +26,6 @@ services:
       - zookeeper
     volumes:
       - kafka-data:/kafka
-    networks:
-      - internal-network
     ports:
       - 29092:29092
       - 9092:9092
@@ -42,14 +38,8 @@ services:
       JVM_OPTS: "-Xms128M -Xmx128M -Xss180K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify"
     depends_on:
       - kafka
-    networks:
-      - internal-network
     ports:
       - 9000:9000
 
 volumes:
   kafka-data:
-
-networks:
-  internal-network:
-    external: true

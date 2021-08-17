@@ -2,11 +2,6 @@
 
 ## Install
 
-Create Docker Network for first run
-
-```
-docker network create internal-network
-```
 
 Setup & Build Project 
 

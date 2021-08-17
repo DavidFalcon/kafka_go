@@ -3,11 +3,14 @@ package connector
 import (
 	"context"
 	"fmt"
-	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
 	"os"
 	"time"
+    "strings"
+    "sort"
+    "sync"
+	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
+	"../utils"
 )
-
 
 // CreateTopic creates a topic using the Admin Client API
 func CreateTopic(p *kafka.Producer, topic string) {
@@ -52,7 +55,7 @@ func CreateTopic(p *kafka.Producer, topic string) {
 
 }
 
-// CreateTopic creates a topic using the Admin Client API
+// CreateProducer creates a producer
 func CreateProducer(conf map[string]string) *kafka.Producer {
 	// Create Producer instance
 	p, err := kafka.NewProducer(&kafka.ConfigMap{
@@ -67,6 +70,18 @@ func CreateProducer(conf map[string]string) *kafka.Producer {
 	return p
 }
 
+// GetProducer creates a producer and a topic if need
+func GetProducer(conf map[string]string, topic *string) *kafka.Producer {
+    // Create Producer instance
+    producer := CreateProducer(conf)
+
+    // Create topic if needed
+    CreateTopic(producer, *topic)
+
+    return producer
+}
+
+// CreateProducer creates a consumer
 func CreateConsumer(conf map[string]string) *kafka.Consumer {
 	// Create Consumer instance
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
@@ -81,9 +96,81 @@ func CreateConsumer(conf map[string]string) *kafka.Consumer {
 	return c
 }
 
+// Push date to topic 'topic' to any partition
 func Push(producer *kafka.Producer, topic *string, recordValue string) {
         producer.Produce(&kafka.Message{
             TopicPartition: kafka.TopicPartition{Topic: topic, Partition: kafka.PartitionAny},
             Value:          []byte(recordValue),
         }, nil)
+}
+
+// Pull date from Kafka and fill arrays
+func PullMessages(consumer *kafka.Consumer,
+                  inputBuffer     []string,
+                  idBuffer        []utils.SortedIntRef,
+                  nameBuffer      []utils.SortedStringRef,
+                  addressBuffer   []utils.SortedStringRef,
+                  continentBuffer []utils.SortedStringRef,
+                  sigchan         chan os.Signal,
+                  conf map[string]string) {
+	current := 0
+	run := true
+	for run == true && current < len(inputBuffer) {
+		select {
+		case sig := <-sigchan:
+			fmt.Printf("Caught signal %v: terminating\n", sig)
+			run = false
+		default:
+			msg, err := consumer.ReadMessage(time.Duration(utils.GetInt(conf["consumer.read.time"])) * time.Millisecond)
+			if err != nil {
+                // The client will automatically try to recover from all errors.
+                fmt.Printf("Consumer error: %v (%v)\n", err, msg)
+				continue
+			}
+			inputBuffer[current] = string(msg.Value)
+			rowDate := strings.Split(inputBuffer[current], ",")
+
+			idBuffer[current]        = utils.SortedIntRef{utils.GetInt32(rowDate[0]), &inputBuffer[current]}
+			nameBuffer[current]      = utils.SortedStringRef{rowDate[1], &inputBuffer[current]}
+            addressBuffer[current]   = utils.SortedStringRef{rowDate[2], &inputBuffer[current]}
+            continentBuffer[current] = utils.SortedStringRef{rowDate[3], &inputBuffer[current]}
+            fmt.Printf("Consumed record value %s, and updated total count to %d\n", inputBuffer[current], current)
+			current++
+		}
+	}
+}
+
+// Processing records that have type Int
+func ProcessIntField(conf map[string]string, date []utils.SortedIntRef, topic string) {
+    sort.SliceStable(date, func(i, j int) bool {
+        return date[i].IntField < date[j].IntField
+    })
+    // Get Producer instance
+    producer:= GetProducer(conf, &topic)
+
+    for _, element := range date {
+        Push(producer, &topic, *element.RawDate)
+    }
+
+    // Wait for all messages to be delivered
+    producer.Flush(utils.GetInt(conf["producer.wait.time"]))
+}
+
+// Processing records that have type String
+func ProcessStringField(wg *sync.WaitGroup, conf map[string]string, date []utils.SortedStringRef, topic string) {
+    defer wg.Done()
+
+    sort.SliceStable(date, func(i, j int) bool {
+        return date[i].StrField < date[j].StrField
+    })
+
+    // Get Producer instance
+    producer:= GetProducer(conf, &topic)
+
+    for _, element := range date {
+        Push(producer, &topic, *element.RawDate)
+    }
+
+    // Wait for all messages to be delivered
+    producer.Flush(utils.GetInt(conf["producer.wait.time"]))
 }
