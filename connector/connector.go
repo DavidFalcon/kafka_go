@@ -57,7 +57,8 @@ func CreateProducer(conf map[string]string) *kafka.Producer {
 	// Create Producer instance
 	p, err := kafka.NewProducer(&kafka.ConfigMap{
 		"bootstrap.servers": conf["bootstrap.servers"],
-		"broker.address.family": "v4"})
+		"broker.address.family": "v4",
+		"go.delivery.reports" : false})
 	if err != nil {
 		fmt.Printf("Failed to create producer: %s", err)
 		os.Exit(1)

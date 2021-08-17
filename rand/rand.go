@@ -12,14 +12,14 @@ func RandInit() {
 }
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-const letterNumberBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789 "
+const letterNumberBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789"
 var Continents = [...]string{ "North America", "Asia", "South America", "Europe", "Africa", "Australia" }
 
 func RandStringBytes(start int, end int, input string) string {
     length := rand.Intn(end - start) + start
     b := make([]byte, length)
     for i := range b {
-        b[i] = input[rand.Intn(len(letterBytes))]
+        b[i] = input[rand.Intn(len(input))]
     }
     return string(b)
 }
