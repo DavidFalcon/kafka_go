@@ -5,6 +5,7 @@ import (
     "fmt"
     "time"
     "sync"
+    "sort"
     "syscall"
     "os/signal"
     "./utils"
@@ -57,10 +58,30 @@ func main() {
     processingTime := time.Now()
     // Create Producer instance
     producer := connector.CreateProducer(conf)
-    connector.ProcessId(producer, conf, parsedBuffer, "id")
-    connector.ProcessName(producer, conf, parsedBuffer, "name")
-    connector.ProcessAddress(producer, conf, parsedBuffer, "address")
-    connector.ProcessContinent(producer, conf, parsedBuffer, "continent")
+    connector.ProcessFields(producer, conf, parsedBuffer, "id", func (buffer []utils.RecordValue) {
+        sort.SliceStable(parsedBuffer, func(i, j int) bool {
+            return parsedBuffer[i].Id < parsedBuffer[j].Id
+        })
+    })
+
+    connector.ProcessFields(producer, conf, parsedBuffer, "name", func (buffer []utils.RecordValue) {
+        sort.SliceStable(parsedBuffer, func(i, j int) bool {
+            return parsedBuffer[i].Name < parsedBuffer[j].Name
+        })
+    })
+
+    connector.ProcessFields(producer, conf, parsedBuffer, "address", func (buffer []utils.RecordValue) {
+        sort.SliceStable(parsedBuffer, func(i, j int) bool {
+            return parsedBuffer[i].Address < parsedBuffer[j].Address
+        })
+    })
+
+    connector.ProcessFields(producer, conf, parsedBuffer, "continent", func (buffer []utils.RecordValue) {
+        sort.SliceStable(parsedBuffer, func(i, j int) bool {
+            return parsedBuffer[i].Continent < parsedBuffer[j].Continent
+        })
+    })
+
     producer.Close()
     processingElapsed := time.Since(processingTime)
 

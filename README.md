@@ -1,4 +1,4 @@
-# Kafka
+# mini project of using Kafka and Go
 
 ## Install
 

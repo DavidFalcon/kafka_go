@@ -4,7 +4,6 @@ import (
     "os"
     "fmt"
     "time"
-    "sort"
     "sync"
     "context"
     "strings"
@@ -12,6 +11,8 @@ import (
     "../utils"
     "../rand"
 )
+
+type SortFields func([]utils.RecordValue)
 
 // CreateTopic creates a topic using the Admin Client API
 func CreateTopic(p *kafka.Producer, topic string) {
@@ -180,42 +181,21 @@ func PullMessages(wg *sync.WaitGroup,
 }
 
 // Processing records
-func ProcessFields(producer *kafka.Producer, conf map[string]string, parsedBuffer []utils.RecordValue, topic *string) {
+func ProcessFields(producer *kafka.Producer,
+                   conf map[string]string,
+                   parsedBuffer []utils.RecordValue,
+                   topic string,
+                   sortBuffer SortFields) {
+
+    sortBuffer(parsedBuffer)
+
     // Create topic if needed
-    CreateTopic(producer, *topic)
+    CreateTopic(producer, topic)
 
     for _, element := range parsedBuffer {
-        Push(producer, topic, kafka.PartitionAny, element.RawDate)
+        Push(producer, &topic, kafka.PartitionAny, element.RawDate)
     }
 
     // Wait for all messages to be delivered
     producer.Flush(utils.GetInt(conf["producer.wait.time"]))
-}
-
-func ProcessId(producer *kafka.Producer, conf map[string]string, parsedBuffer []utils.RecordValue, topic string) {
-    sort.SliceStable(parsedBuffer, func(i, j int) bool {
-        return parsedBuffer[i].Id < parsedBuffer[j].Id
-    })
-    ProcessFields(producer, conf, parsedBuffer, &topic)
-}
-
-func ProcessName(producer *kafka.Producer, conf map[string]string, parsedBuffer []utils.RecordValue, topic string) {
-    sort.SliceStable(parsedBuffer, func(i, j int) bool {
-        return parsedBuffer[i].Name < parsedBuffer[j].Name
-    })
-    ProcessFields(producer, conf, parsedBuffer, &topic)
-}
-
-func ProcessAddress(producer *kafka.Producer, conf map[string]string, parsedBuffer []utils.RecordValue, topic string) {
-    sort.SliceStable(parsedBuffer, func(i, j int) bool {
-        return parsedBuffer[i].Address < parsedBuffer[j].Address
-    })
-    ProcessFields(producer, conf, parsedBuffer, &topic)
-}
-
-func ProcessContinent(producer *kafka.Producer, conf map[string]string, parsedBuffer []utils.RecordValue, topic string) {
-    sort.SliceStable(parsedBuffer, func(i, j int) bool {
-        return parsedBuffer[i].Continent < parsedBuffer[j].Continent
-    })
-    ProcessFields(producer, conf, parsedBuffer, &topic)
 }
