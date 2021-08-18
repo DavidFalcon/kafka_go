@@ -12,9 +12,9 @@ import (
 
 func main() {
 
-	// Initialization
-	configFile, topic := config_reader.ParseArgs()
-	conf := config_reader.ReadConfig(*configFile)
+    // Initialization
+    configFile, topic := config_reader.ParseArgs()
+    conf := config_reader.ReadConfig(*configFile)
 
     // Run generator
     rand.RandInit()

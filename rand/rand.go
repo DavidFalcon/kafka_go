@@ -13,13 +13,13 @@ func RandInit() {
 
 // Mixture of numbers, characters, and space for random values
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-const letterNumberBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789"
+const letterNumberBytes = letterBytes + " 0123456789"
 var Continents = [...]string{ "North America", "Asia", "South America", "Europe", "Africa", "Australia" }
 
 // Generate random string with size between [start, end] from random letters 'input'
 func RandStringBytes(start int, end int, input string) string {
-    length := rand.Intn(end - start) + start
-    b := make([]byte, length)
+    randLen := rand.Intn(end - start) + start
+    b := make([]byte, randLen)
     for i := range b {
         b[i] = input[rand.Intn(len(input))]
     }
@@ -28,8 +28,8 @@ func RandStringBytes(start int, end int, input string) string {
 
 // Get random continent
 func RandContinent() string {
-    length := rand.Intn(len(Continents))
-    return Continents[length]
+    pos := rand.Intn(len(Continents))
+    return Continents[pos]
 }
 
 // Generate random CSV record, delimiter is ','

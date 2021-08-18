@@ -1,11 +1,11 @@
 package config_reader
 
 import (
-	"os"
+    "os"
     "fmt"
     "flag"
     "bufio"
-	"strings"
+    "strings"
 )
 
 // ParseArgs parses the command line arguments and

@@ -1,16 +1,16 @@
 package connector
 
 import (
-	"os"
+    "os"
     "fmt"
-	"time"
+    "time"
     "sort"
     "sync"
     "context"
     "strings"
-	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
-	"../utils"
-	"../rand"
+    "gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
+    "../utils"
+    "../rand"
 )
 
 // CreateTopic creates a topic using the Admin Client API
@@ -150,32 +150,32 @@ func PullMessages(wg *sync.WaitGroup,
     // Assign partition
     consumer.Assign([]kafka.TopicPartition{{Topic: topic, Partition: partition}})
 
-	current := start
-	run := true
-	for run == true && current < end {
-		select {
-		case sig := <-sigchan:
-			fmt.Printf("Caught signal %v: terminating\n", sig)
-			run = false
-		default:
-			msg, err := consumer.ReadMessage(time.Duration(utils.GetInt(conf["consumer.read.time"])) * time.Millisecond)
-			if err != nil {
+    current := start
+    run := true
+    for run == true && current < end {
+    	select {
+    	case sig := <-sigchan:
+    		fmt.Printf("Caught signal %v: terminating\n", sig)
+    		run = false
+    	default:
+    		msg, err := consumer.ReadMessage(time.Duration(utils.GetInt(conf["consumer.read.time"])) * time.Millisecond)
+    		if err != nil {
                 // The client will automatically try to recover from all errors.
                 fmt.Printf("Consumer error: %v (%v)\n", err, msg)
-				continue
-			}
-			value   := string(msg.Value)
-			rowDate := strings.Split(value, ",")
-			parsedBuffer[current] = utils.RecordValue{utils.GetInt32(rowDate[0]),
-			                                          rowDate[1],
-			                                          rowDate[2],
-			                                          rowDate[3],
-			                                          value}
+    			continue
+    		}
+    		value   := string(msg.Value)
+    		rowDate := strings.Split(value, ",")
+    		parsedBuffer[current] = utils.RecordValue{utils.GetInt32(rowDate[0]),
+    		                                          rowDate[1],
+    		                                          rowDate[2],
+    		                                          rowDate[3],
+    		                                          value}
             fmt.Printf("Consumed record value %s, and updated total count to %d\n", parsedBuffer[current].RawDate, current)
-			current++
-		}
-	}
-	fmt.Printf("Closing consumer\n")
+    		current++
+    	}
+    }
+    fmt.Printf("Closing consumer\n")
     consumer.Close()
 }
 
