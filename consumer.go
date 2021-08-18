@@ -1,15 +1,15 @@
 package main
 
 import (
-    "./connector"
-    "./config_reader"
-    "./utils"
-    "os/signal"
-    "fmt"
-    "syscall"
     "os"
+    "fmt"
     "time"
     "sync"
+    "syscall"
+    "os/signal"
+    "./utils"
+    "./connector"
+    "./config_reader"
 )
 
 func main() {
@@ -18,51 +18,51 @@ func main() {
 	configFile, topic := config_reader.ParseArgs()
 	conf := config_reader.ReadConfig(*configFile)
 
-	// Create Consumer instance
-    consumer:= connector.CreateConsumer(conf)
-
-	// Subscribe to topic
-	consumer.SubscribeTopics([]string{*topic}, nil)
 	// Set up a channel for handling Ctrl-C, etc
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
-
-    // Allocate buffers for input date
+    // Allocate buffer for input date
     maxCount        := utils.GetInt(conf["date.count"])
-    inputBuffer     := make([]string, maxCount)
-    idBuffer        := make([]utils.SortedIntRef, maxCount)
-    nameBuffer      := make([]utils.SortedStringRef, maxCount)
-    addressBuffer   := make([]utils.SortedStringRef, maxCount)
-    continentBuffer := make([]utils.SortedStringRef, maxCount)
+    parsedBuffer    := make([]utils.RecordValue, maxCount)
 
     consumerTime := time.Now()
 	// Process messages
-    connector.PullMessages(consumer,
-                           inputBuffer,
-                           idBuffer,
-                           nameBuffer,
-                           addressBuffer,
-                           continentBuffer,
+    //multithreaded consuming
+    //create only 1 new thread because the thread limit is 4
+    // 2 thread for producer, 1 is main and 1 additional
+    var wg sync.WaitGroup
+    wg.Add(1)
+    go connector.PullMessages(&wg,
+                              topic,
+                              0,
+                              parsedBuffer,
+                              sigchan,
+                              conf,
+                              0,
+                              maxCount/2)
+    connector.PullMessages(nil,
+                           topic,
+                           1,
+                           parsedBuffer,
                            sigchan,
-                           conf)
+                           conf,
+                           maxCount/2,
+                           maxCount)
+    wg.Wait()
 
-	fmt.Printf("Closing consumer\n")
-	consumer.Close()
     consumerElapsed := time.Since(consumerTime)
     fmt.Printf("Consumer took  %s\n", consumerElapsed)
 
     processingTime := time.Now()
-    //multithreaded queue processing
-    //create only 3 new threads because the thread limit is 4
-    var wg sync.WaitGroup
-    wg.Add(3)
-    go connector.ProcessStringField(&wg, conf, nameBuffer, "name")
-    go connector.ProcessStringField(&wg, conf, addressBuffer, "address")
-    go connector.ProcessStringField(&wg, conf, continentBuffer, "continent")
-    connector.ProcessIntField(conf, idBuffer, "id")
-    wg.Wait()
-
+    // Create Producer instance
+    producer := connector.CreateProducer(conf)
+    connector.ProcessId(producer, conf, parsedBuffer, "id")
+    connector.ProcessName(producer, conf, parsedBuffer, "name")
+    connector.ProcessAddress(producer, conf, parsedBuffer, "address")
+    connector.ProcessContinent(producer, conf, parsedBuffer, "continent")
+    producer.Close()
     processingElapsed := time.Since(processingTime)
+
     fmt.Printf("Processing took  %s\n", processingElapsed)
 }

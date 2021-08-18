@@ -1,10 +1,10 @@
 package config_reader
 
 import (
-	"bufio"
-	"flag"
-	"fmt"
 	"os"
+    "fmt"
+    "flag"
+    "bufio"
 	"strings"
 )
 

@@ -1,10 +1,10 @@
 package rand
 
 import (
-    "strconv"
-    "math/rand"
     "math"
     "time"
+    "strconv"
+    "math/rand"
 )
 
 func RandInit() {

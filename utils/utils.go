@@ -1,18 +1,17 @@
 package utils
 
 import (
-    "fmt"
     "os"
+    "fmt"
     "strconv"
 )
 
-type SortedIntRef struct {
-    IntField int32
-    RawDate *string
-}
-type SortedStringRef struct {
-    StrField string
-    RawDate *string
+type RecordValue struct {
+    Id int32
+    Name string
+    Address string
+    Continent string
+    RawDate string
 }
 
 func GetInt(str string) int {

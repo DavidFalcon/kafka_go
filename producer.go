@@ -3,10 +3,11 @@ package main
 import (
     "fmt"
     "time"
-    "./connector"
-    "./config_reader"
+    "sync"
     "./rand"
     "./utils"
+    "./connector"
+    "./config_reader"
 )
 
 func main() {
@@ -15,24 +16,21 @@ func main() {
 	configFile, topic := config_reader.ParseArgs()
 	conf := config_reader.ReadConfig(*configFile)
 
-    // Get Producer instance
-    producer:= connector.GetProducer(conf, topic)
-
     // Run generator
     rand.RandInit()
 
-    start := time.Now()
+    maxCount := utils.GetInt(conf["date.count"])
+    start    := time.Now()
     // Generate random date and push
-    for n := 0; n < utils.GetInt(conf["date.count"]); n++ {
-        fmt.Printf("Push #%d\n", n)
-        connector.Push(producer, topic, rand.RandRecord())
-    }
-
-    // Wait for all messages to be delivered
-    producer.Flush(utils.GetInt(conf["producer.wait.time"]))
+    //multithreaded producing
+    //create only 1 new thread because the thread limit is 4
+    // 2 thread for consumer, 1 is main and 1 additional
+    var wg sync.WaitGroup
+    wg.Add(1)
+    go connector.PushMessages(&wg, conf, topic, 0, maxCount/2)
+    connector.PushMessages(nil, conf, topic, 1, maxCount/2)
+    wg.Wait()
 
     elapsed := time.Since(start)
     fmt.Printf("Produce took  %s\n", elapsed)
-
-    producer.Close()
 }
