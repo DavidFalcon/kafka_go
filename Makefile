@@ -15,5 +15,5 @@ clean:
 all: build_producer build_consumer
 
 rebuild:
-	docker-compose down && docker-compose build && docker-compose up -d && docker-compose logs -f
+	docker-compose --compatibility down && docker-compose --compatibility build && docker-compose --compatibility up -d && docker-compose logs -f
 

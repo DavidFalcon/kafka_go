@@ -12,6 +12,11 @@ services:
       context: image
       dockerfile: Dockerfile
     container_name: kafka
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1Gb
     environment:
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
       KAFKA_LISTENERS: "INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092"
@@ -29,6 +34,7 @@ services:
     ports:
       - 29092:29092
       - 9092:9092
+
 
   kafdrop:
     image: obsidiandynamics/kafdrop

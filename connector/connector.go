@@ -4,15 +4,13 @@ import (
     "os"
     "fmt"
     "time"
-    "sync"
     "context"
-    "strings"
     "gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
     "../utils"
     "../rand"
 )
 
-type SortFields func([]utils.RecordValue)
+type SortFields func([]string)
 
 // CreateTopic creates a topic using the Admin Client API
 func CreateTopic(p *kafka.Producer, topic string) {
@@ -39,7 +37,7 @@ func CreateTopic(p *kafka.Producer, topic string) {
 		// by providing more TopicSpecification structs here.
 		[]kafka.TopicSpecification{{
 			Topic:             topic,
-			NumPartitions:     2}},
+			NumPartitions:     1}},
 		// Admin options
 		kafka.SetAdminOperationTimeout(maxDur))
 	if err != nil {
@@ -99,29 +97,23 @@ func CreateConsumer(conf map[string]string) *kafka.Consumer {
 }
 
 // Push date to topic 'topic' to 'partition'
-func Push(producer *kafka.Producer, topic *string, partition int32, recordValue string) {
+func Push(producer *kafka.Producer, topic *string, recordValue string) {
     producer.Produce(&kafka.Message{
-        TopicPartition: kafka.TopicPartition{Topic: topic, Partition: partition},
+        TopicPartition: kafka.TopicPartition{Topic: topic, Partition: kafka.PartitionAny},
         Value:          []byte(recordValue),
     }, nil)
 }
 
-// Generate and Push date to topic 'topic' to 'partition'
-func PushMessages(wg *sync.WaitGroup,
-                  conf map[string]string,
-                  topic *string,
-                  partition int32,
-                  count int) {
-    if wg != nil {
-      defer wg.Done()
-    }
+// Generate and Push date to topic 'topic' to any partition
+func PushMessages(conf map[string]string,
+                  topic *string) {
 
     // Get Producer instance
     producer:= GetProducer(conf, topic)
 
-    for n := 0; n < count; n++ {
+    for n := 0; n < utils.GetInt(conf["date.count"]); n++ {
       fmt.Printf("Push #%d\n", n)
-      Push(producer, topic, partition, rand.RandRecord())
+      Push(producer, topic, rand.RandRecord())
     }
     // Wait for all messages to be delivered
     producer.Flush(utils.GetInt(conf["producer.wait.time"]))
@@ -130,17 +122,10 @@ func PushMessages(wg *sync.WaitGroup,
 
 
 // Pull date from Kafka and fill arrays
-func PullMessages(wg *sync.WaitGroup,
-                  topic *string,
-                  partition int32,
-                  parsedBuffer    []utils.RecordValue,
+func PullMessages(topic *string,
+                  parsedBuffer    []string,
                   sigchan         chan os.Signal,
-                  conf map[string]string,
-                  start int,
-                  end int) {
-    if wg != nil {
-        defer wg.Done()
-    }
+                  conf map[string]string){
 
     // Create Consumer instance
     consumer:= CreateConsumer(conf)
@@ -148,12 +133,9 @@ func PullMessages(wg *sync.WaitGroup,
     // Subscribe to topic
     consumer.SubscribeTopics([]string{*topic}, nil)
 
-    // Assign partition
-    consumer.Assign([]kafka.TopicPartition{{Topic: topic, Partition: partition}})
-
-    current := start
+    current := 0
     run := true
-    for run == true && current < end {
+    for run == true && current < utils.GetInt(conf["date.count"]) {
     	select {
     	case sig := <-sigchan:
     		fmt.Printf("Caught signal %v: terminating\n", sig)
@@ -165,14 +147,8 @@ func PullMessages(wg *sync.WaitGroup,
                 fmt.Printf("Consumer error: %v (%v)\n", err, msg)
     			continue
     		}
-    		value   := string(msg.Value)
-    		rowDate := strings.Split(value, ",")
-    		parsedBuffer[current] = utils.RecordValue{utils.GetInt32(rowDate[0]),
-    		                                          rowDate[1],
-    		                                          rowDate[2],
-    		                                          rowDate[3],
-    		                                          value}
-            fmt.Printf("Consumed record value %s, and updated total count to %d\n", parsedBuffer[current].RawDate, current)
+    		parsedBuffer[current] = string(msg.Value)
+            fmt.Printf("Consumed record value %s, and updated total count to %d\n", parsedBuffer[current], current)
     		current++
     	}
     }
@@ -183,7 +159,7 @@ func PullMessages(wg *sync.WaitGroup,
 // Processing records
 func ProcessFields(producer *kafka.Producer,
                    conf map[string]string,
-                   parsedBuffer []utils.RecordValue,
+                   parsedBuffer []string,
                    topic string,
                    sortBuffer SortFields) {
 
@@ -193,7 +169,7 @@ func ProcessFields(producer *kafka.Producer,
     CreateTopic(producer, topic)
 
     for _, element := range parsedBuffer {
-        Push(producer, &topic, kafka.PartitionAny, element.RawDate)
+        Push(producer, &topic, element)
     }
 
     // Wait for all messages to be delivered

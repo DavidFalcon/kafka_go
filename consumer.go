@@ -4,8 +4,8 @@ import (
     "os"
     "fmt"
     "time"
-    "sync"
     "sort"
+    "strings"
     "syscall"
     "os/signal"
     "./utils"
@@ -24,33 +24,15 @@ func main() {
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
     // Allocate buffer for input date
-    maxCount        := utils.GetInt(conf["date.count"])
-    parsedBuffer    := make([]utils.RecordValue, maxCount)
+    maxCount     := utils.GetInt(conf["date.count"])
+    parsedBuffer := make([]string, maxCount)
 
     consumerTime := time.Now()
 	// Process messages
-    //multithreaded consuming
-    //create only 1 new thread because the thread limit is 4
-    // 2 thread for producer, 1 is main and 1 additional
-    var wg sync.WaitGroup
-    wg.Add(1)
-    go connector.PullMessages(&wg,
-                              topic,
-                              0,
-                              parsedBuffer,
-                              sigchan,
-                              conf,
-                              0,
-                              maxCount/2)
-    connector.PullMessages(nil,
-                           topic,
-                           1,
+    connector.PullMessages(topic,
                            parsedBuffer,
                            sigchan,
-                           conf,
-                           maxCount/2,
-                           maxCount)
-    wg.Wait()
+                           conf)
 
     consumerElapsed := time.Since(consumerTime)
     fmt.Printf("Consumer took  %s\n", consumerElapsed)
@@ -58,32 +40,42 @@ func main() {
     processingTime := time.Now()
     // Create Producer instance
     producer := connector.CreateProducer(conf)
-    connector.ProcessFields(producer, conf, parsedBuffer, "id", func (buffer []utils.RecordValue) {
+
+    connector.ProcessFields(producer, conf, parsedBuffer, "id", func (buffer []string) {
         sort.SliceStable(parsedBuffer, func(i, j int) bool {
-            return parsedBuffer[i].Id < parsedBuffer[j].Id
-        })
+            left := strings.Split(parsedBuffer[i], ",")
+            right := strings.Split(parsedBuffer[j], ",")
+            return left[0] < right[0]
+            })
     })
 
-    connector.ProcessFields(producer, conf, parsedBuffer, "name", func (buffer []utils.RecordValue) {
+    connector.ProcessFields(producer, conf, parsedBuffer, "name", func (buffer []string) {
         sort.SliceStable(parsedBuffer, func(i, j int) bool {
-            return parsedBuffer[i].Name < parsedBuffer[j].Name
-        })
+            left := strings.Split(parsedBuffer[i], ",")
+            right := strings.Split(parsedBuffer[j], ",")
+            return left[1] < right[1]
+            })
     })
 
-    connector.ProcessFields(producer, conf, parsedBuffer, "address", func (buffer []utils.RecordValue) {
+    connector.ProcessFields(producer, conf, parsedBuffer, "address", func (buffer []string) {
         sort.SliceStable(parsedBuffer, func(i, j int) bool {
-            return parsedBuffer[i].Address < parsedBuffer[j].Address
-        })
+            left := strings.Split(parsedBuffer[i], ",")
+            right := strings.Split(parsedBuffer[j], ",")
+            return left[2] < right[2]
+            })
     })
 
-    connector.ProcessFields(producer, conf, parsedBuffer, "continent", func (buffer []utils.RecordValue) {
+    connector.ProcessFields(producer, conf, parsedBuffer, "continent", func (buffer []string) {
         sort.SliceStable(parsedBuffer, func(i, j int) bool {
-            return parsedBuffer[i].Continent < parsedBuffer[j].Continent
-        })
+            left := strings.Split(parsedBuffer[i], ",")
+            right := strings.Split(parsedBuffer[j], ",")
+            return left[3] < right[3]
+            })
     })
 
     producer.Close()
     processingElapsed := time.Since(processingTime)
 
     fmt.Printf("Processing took  %s\n", processingElapsed)
+
 }

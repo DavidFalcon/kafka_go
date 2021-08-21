@@ -6,14 +6,6 @@ import (
     "strconv"
 )
 
-type RecordValue struct {
-    Id int32
-    Name string
-    Address string
-    Continent string
-    RawDate string
-}
-
 func GetInt(str string) int {
     val, err := strconv.Atoi(str)
     if err != nil {
