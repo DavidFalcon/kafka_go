@@ -16,7 +16,7 @@ services:
       resources:
         limits:
           cpus: '2'
-          memory: 1Gb
+          memory: 500mb
     environment:
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
       KAFKA_LISTENERS: "INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092"
@@ -36,16 +36,16 @@ services:
       - 9092:9092
 
 
-  kafdrop:
-    image: obsidiandynamics/kafdrop
-    container_name: kafdrop
-    environment:
-      KAFKA_BROKERCONNECT: "kafka:29092"
-      JVM_OPTS: "-Xms128M -Xmx128M -Xss180K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify"
-    depends_on:
-      - kafka
-    ports:
-      - 9000:9000
+#  kafdrop:
+#    image: obsidiandynamics/kafdrop
+#    container_name: kafdrop
+#    environment:
+#      KAFKA_BROKERCONNECT: "kafka:29092"
+#      JVM_OPTS: "-Xms128M -Xmx128M -Xss180K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify"
+#    depends_on:
+#      - kafka
+#    ports:
+#      - 9000:9000
 
 volumes:
   kafka-data:
