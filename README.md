@@ -1,15 +1,24 @@
 # Mini project of using Kafka and Go
 
-## Install
+## Download
+
+run
+
+```
+git clone https://github.com/DavidFalcon/kafka_go.git
+```
 
 
-Setup & Build Project 
+## Run docker-compose
+
+
+run
 
 ```
 make rebuild
 ```
-The current information can be checked in turn in kafdrop
-UI Available on http://localhost:9000
+<!-- The current information can be checked in turn in kafdrop
+UI Available on http://localhost:9000 -->
 
 ## Go installation
 
@@ -20,37 +29,47 @@ go get gopkg.in/confluentinc/confluent-kafka-go.v1/kafka
 
 ## Go build
 
-Just run command
+run
 
 ```
 make all
 ```
-After it consumer and producer will be builded
+After it, consumer and producer will be build
 
 ## Go run
 ### Producer
+run
 ```
 ./producer
 ```
 ### Consumer
+run
 ```
 ./consumer
 ```
 They both can handle input parameters, -f `config_file` and -t `topic`, by default `config_file`=./basic_config.cfg, `topic`=source
 
+## Limitations
+
+Docker-compose runs under limits CPU = 2, RAM = 500Mb
+Consumer and Producer use by 1 thread - main. Consumer allocate array of stings with size 50000000
+
 ## Architecture
 ### Producer
-The producer generates random strings in CVS format using `utils` and inserts them into two partitions in parallel. Added additional thread for data insertion
+The producer generates random strings in CVS format using `utils` and inserts them
 
 ### Consumer
-The consumer reads data from two partitions into one data array in two streams, splitting it in half to avoid blocking for writing. There is also parsing of CVS lines for further sorting. Then the sorting by one field goes sequentially and the original string is saved, but in the sorted order.
+The consumer reads data from the topic source into one data array
+
+## Better architecture
 
 ## Points to improve
  * Attach threads to cores to avoid cache miss
  * Use `hugepages`(linux) for direct allocating memory for consumer
- * We can use  Map Reduce approach for sorting date between nodes
+ * We can use  Map Reduce approach for sorting data between nodes
  
 ## Time
-In my virtual machine producer takes about 25 minutes, consumer obtains all data in 30 minutes and then sort and push in 50 minutes
+Each application print time after completion
+In my virtual machine producer takes about 25 minutes, the consumer obtains all data in 30 minutes and then sort and push in 50 minutes
 
 
