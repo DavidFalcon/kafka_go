@@ -62,6 +62,7 @@ The producer generates random strings in CVS format using `utils` and inserts th
 The consumer reads data from the topic source into one data array
 
 ## Better architecture
+![kafka_go](https://user-images.githubusercontent.com/17788343/130334069-cff739b9-c0b4-4c81-8b65-cf7948411399.jpg)
 
 ## Points to improve
  * Attach threads to cores to avoid cache miss
