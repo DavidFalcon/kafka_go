@@ -73,4 +73,12 @@ The consumer reads data from the topic source into one data array
 Each application print time after completion
 In my virtual machine producer takes about 25 minutes, the consumer obtains all data in 30 minutes and then sort and push in 50 minutes
 
+## Verify 
+Docker-compose runs under limits CPU = 2, RAM = 500Mb so there I hope shouldn't be a problem
+
+Producer and Consumer use by 1 thread, so the whole pipeline takes only 4 cores. Consumer allocates the only array of string with size 50000000 this consumption can be checked with 
+```
+ps aux | grep consumer
+sudo pmap {pid_of_consumer}
+```
 
