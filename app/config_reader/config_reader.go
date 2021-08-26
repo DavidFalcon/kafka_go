@@ -12,7 +12,7 @@ import (
 // returns the config file and topic on success, or exits on error
 func ParseArgs() (*string, *string) {
 
-	configFile := flag.String("f", "./basic_config.cfg", "Path to configuration file")
+	configFile := flag.String("f", "../basic_config.cfg", "Path to configuration file")
 	topic := flag.String("t", "source", "Topic name")
 	flag.Parse()
 

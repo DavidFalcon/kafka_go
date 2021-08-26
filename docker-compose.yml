@@ -24,8 +24,8 @@ services:
           memory: 500mb
     environment:
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
-      KAFKA_LISTENERS: "INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092"
-      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka:29092,EXTERNAL://localhost:9092"
+      KAFKA_LISTENERS: "INTERNAL://kafka:29092,EXTERNAL://kafka:9092"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka:29092,EXTERNAL://kafka:9092"
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT"
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
       KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
@@ -45,6 +45,8 @@ services:
       context: app
       dockerfile: Dockerfile
     container_name: go_app
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
     deploy:
       resources:
         limits:
@@ -52,7 +54,6 @@ services:
           memory: 1400mb
     depends_on:
       - kafka
-
 
 #  kafdrop:
 #    image: obsidiandynamics/kafdrop
