@@ -8,9 +8,9 @@ import (
     "strings"
     "syscall"
     "os/signal"
-    "./utils"
-    "./connector"
-    "./config_reader"
+    "utils"
+    "connector"
+    "config_reader"
 )
 
 func main() {

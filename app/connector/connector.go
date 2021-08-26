@@ -6,8 +6,8 @@ import (
     "time"
     "context"
     "gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
-    "../utils"
-    "../rand"
+    "utils"
+    "rand"
 )
 
 type SortFields func([]string)

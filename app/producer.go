@@ -3,9 +3,9 @@ package main
 import (
     "fmt"
     "time"
-    "./rand"
-    "./connector"
-    "./config_reader"
+    "rand"
+    "connector"
+    "config_reader"
 )
 
 func main() {
