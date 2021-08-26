@@ -20,38 +20,22 @@ make rebuild
 <!-- The current information can be checked in turn in kafdrop
 UI Available on http://localhost:9000 -->
 
-## Go installation
-
-To be able to connect Go to the Kafka queue, you need to install the library
-```
-go get gopkg.in/confluentinc/confluent-kafka-go.v1/kafka
-```
-
-## Go build
-
-run
-
-```
-make all
-```
-After it, consumer and producer will be build
-
 ## Go run
 ### Producer
 run
 ```
-./producer
+docker exec -ti go_app /go/src/app/producer/producer
 ```
 ### Consumer
 run
 ```
-./consumer
+docker exec -ti go_app /go/src/app/consumer/consumer
 ```
-They both can handle input parameters, -f `config_file` and -t `topic`, by default `config_file`=./basic_config.cfg, `topic`=source
+They both can handle input parameters, -f `config_file` and -t `topic`, by default `config_file`=../basic_config.cfg, `topic`=source
 
 ## Limitations
 
-Docker-compose runs under limits CPU = 2, RAM = 500Mb
+Whole docker-compose runs under limits CPU = 4, RAM = 4Gb
 Consumer and Producer use by 1 thread - main. Consumer allocate array of stings with size 50000000
 
 ## Architecture
@@ -74,11 +58,7 @@ Each application print time after completion
 In my virtual machine producer takes about 25 minutes, the consumer obtains all data in 30 minutes and then sort and push in 50 minutes
 
 ## Verify 
-Docker-compose runs under limits CPU = 2, RAM = 500Mb so there I hope shouldn't be a problem
+Docker-compose runs under limits CPU = 4, RAM = 4Gb
 
-Producer and Consumer use by 1 thread, so the whole pipeline takes only 4 cores. Consumer allocates the only array of string with size 50000000 this consumption can be checked with 
-```
-ps aux | grep consumer
-sudo pmap {pid_of_consumer}
-```
+Producer and Consumer use by 1 thread, so the whole pipeline takes only 4 cores. Consumer allocates the only array of string with size 50000000
 
